@@ -35,6 +35,7 @@ slide() {
                 LINE=${LINE//<${C%%=*}>/\\033\[0\;${C##*=}m}
             done
         fi
+        [ "$BARE" == '!!vcenter' ] && LINENUM="$((ROWS/2))" && continue
         [ "$BARE" == '!!center' ] && CENTER=1 && continue
         [ "$BARE" == '!!nocenter' ] && CENTER=0 && continue
         [ "$BARE" == '!!pause' ] && read -s < /dev/tty && continue
