@@ -68,8 +68,6 @@ if [[ ! -x "$SLIDEFILE" ]]; then
     exit 1
 fi
 
-source "$SLIDEFILE"
-
 UNPARSED="$(<"$1")"
 I=0
 while [[ -n "$UNPARSED" ]]; do
