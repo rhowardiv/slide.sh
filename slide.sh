@@ -1,18 +1,18 @@
 #!/bin/bash
 
 usage() {
-	echo "Interactively show slides from a file"
-	echo
-	echo "Usage:"
-	echo "$0 FILE"
-	echo
-	echo "FILE is the file containing the slides."
-	echo "In the file, separate each slide with the word \"slide\" on a"
-	echo "line by itself."
-	echo
-	echo "Control:"
-	echo "Pressing k or h will move backwards one slide."
-	echo "Pressing anything else will move ahead one slide."
+    echo "Interactively show slides from a file"
+    echo
+    echo "Usage:"
+    echo "$0 FILE"
+    echo
+    echo "FILE is the file containing the slides."
+    echo "In the file, separate each slide with the word \"slide\" on a"
+    echo "line by itself."
+    echo
+    echo "Control:"
+    echo "Pressing k or h will move backwards one slide."
+    echo "Pressing anything else will move ahead one slide."
 }
 
 slide() {
@@ -30,7 +30,7 @@ slide() {
         [ "$LINE" == '!!nocolor' ] && HASCOLOR=0 && continue
         BARE=$LINE
         if [ $HASCOLOR -eq 1 ]; then
-            for C in ${COLORS[@]}; do
+            for C in "${COLORS[@]}"; do
                 BARE=${BARE//<${C%%=*}>/}
                 LINE=${LINE//<${C%%=*}>/\\033\[0\;${C##*=}m}
             done
@@ -53,19 +53,19 @@ slide() {
 }
 
 if [[ $# -lt 1 ]]; then
-	usage
-	exit 1
+    usage
+    exit 1
 fi
 
 if [[ ! -x "$(type -p tput)" ]]; then
-	echo 'The command "tput" is missing' 
-	exit 1
+    echo 'The command "tput" is missing' 
+    exit 1
 fi
 
 SLIDEFILE="$(type -p slide.sh)"
 if [[ ! -x "$SLIDEFILE" ]]; then
-	echo 'The command "slide.sh" is missing' 
-	exit 1
+    echo 'The command "slide.sh" is missing' 
+    exit 1
 fi
 
 source "$SLIDEFILE"
@@ -73,32 +73,32 @@ source "$SLIDEFILE"
 UNPARSED="$(<"$1")"
 I=0
 while [[ -n "$UNPARSED" ]]; do
-	I=$((I + 1))
-	SLIDE[$I]="$(echo "$UNPARSED" | sed -n -e '/^slide$/q;p'; echo x)"
-	# bash gotcha: command expansion removes trailing newlines
-	# we need them here for counting purposes
-	# so throw an "x" on the end and take it off after expansion's done
-	SLIDE[$I]="${SLIDE[$I]%x}"
-	REMOVE_LINES=$(echo "${SLIDE[$I]}" | wc -l)
-	UNPARSED="$(echo "$UNPARSED" | sed 1,"$REMOVE_LINES"d)"
+    I=$((I + 1))
+    SLIDE[$I]="$(echo "$UNPARSED" | sed -n -e '/^slide$/q;p'; echo x)"
+    # bash gotcha: command expansion removes trailing newlines
+    # we need them here for counting purposes
+    # so throw an "x" on the end and take it off after expansion's done
+    SLIDE[$I]="${SLIDE[$I]%x}"
+    REMOVE_LINES=$(echo "${SLIDE[$I]}" | wc -l)
+    UNPARSED="$(echo "$UNPARSED" | sed 1,"$REMOVE_LINES"d)"
 done
 
 SLIDE_IX=1
-echo -n "${SLIDE[$SLIDE_IX]}" | slide
+echo -n "${SLIDE[$SLIDE_IX]}" | slide "$@"
 while read -s -N 1; do
-	case "$REPLY" in
-		[hk])
-			GO=-1
-			;;
-		*)
-			GO=1
-			;;
-	esac
-	SLIDE_IX=$((SLIDE_IX + GO))
-	if [ "$SLIDE_IX" -gt "${#SLIDE[@]}" ]; then
-		SLIDE_IX="${#SLIDE[@]}"
-	elif [ "$SLIDE_IX" -lt 1 ]; then
-		SLIDE_IX=1
-	fi
-	echo -n "${SLIDE[$SLIDE_IX]}" | slide
+    case "$REPLY" in
+        [hk])
+            GO=-1
+            ;;
+        *)
+            GO=1
+            ;;
+    esac
+    SLIDE_IX=$((SLIDE_IX + GO))
+    if [ "$SLIDE_IX" -gt "${#SLIDE[@]}" ]; then
+        SLIDE_IX="${#SLIDE[@]}"
+    elif [ "$SLIDE_IX" -lt 1 ]; then
+        SLIDE_IX=1
+    fi
+    echo -n "${SLIDE[$SLIDE_IX]}" | slide
 done
