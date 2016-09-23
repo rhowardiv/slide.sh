@@ -18,14 +18,14 @@ usage() {
 slide() {
     local -r TPUT=$(type -p tput)
     [ -x "$TPUT" ] || exit 1
-    local -r IFS='' MESSAGE=${1:-<Enter> Next slide | <ctrl+c> Quit}
+    local -r IFS='' # ?
     local -r COLORS=(red=31 green=32 yellow=33 blue=34 purple=35 cyan=36 end=)
     local -ri COLS=$($TPUT cols) ROWS=$($TPUT lines)
-    local -i CENTER=0 LINENUM=0 CTRPOS=0 MSGPOS=0 HASCOLOR=1
+    local -i CENTER=0 LINENUM=0 CTRPOS=0 HASCOLOR=1
     local LINE='' BARE=''
-    trap "$TPUT clear" 0
+    trap '$TPUT clear' 0
     $TPUT clear
-    while read LINE; do
+    while read -r LINE; do
         [ "$LINE" == '!!color' ] && HASCOLOR=1 && continue
         [ "$LINE" == '!!nocolor' ] && HASCOLOR=0 && continue
         BARE=$LINE
@@ -38,17 +38,20 @@ slide() {
         [ "$BARE" == '!!vcenter' ] && LINENUM="$((ROWS/2))" && continue
         [ "$BARE" == '!!center' ] && CENTER=1 && continue
         [ "$BARE" == '!!nocenter' ] && CENTER=0 && continue
-        [ "$BARE" == '!!pause' ] && read -s < /dev/tty && continue
+        [ "$BARE" == '!!pause' ] && read -rs < /dev/tty && continue
         if [ "$BARE" == '!!sep' ]; then
             printf -vBARE "%${COLS}s" '' && BARE=${BARE// /-}
             LINE=${LINE//\!\!sep/$BARE}
         fi
-        [ ${#MESSAGE} -lt $COLS ] && MSGPOS=$(((COLS-1)-${#MESSAGE}))
-        [ ${#BARE} -le $COLS ] && CTRPOS=$(((COLS-${#BARE})/2))
-        [ $CENTER -eq 1 ] && $TPUT cup $LINENUM $CTRPOS || $TPUT cup $LINENUM 0
+        [ "${#BARE}" -le "$COLS" ] && CTRPOS=$(((COLS-${#BARE})/2))
+        if [[ "$CENTER" -eq 1 ]]; then
+            "$TPUT" cup "$LINENUM" "$CTRPOS"
+        else
+            $TPUT cup $LINENUM 0
+        fi
         printf -- "${LINE//%/%%}\n"
-        $TPUT cup $ROWS $COLS && let LINENUM++
-        [ ${#BARE} -gt $COLS ] && let LINENUM++
+        "$TPUT" cup "$ROWS" "$COLS" && let LINENUM++
+        [ "${#BARE}" -gt "$COLS" ] && let LINENUM++
     done
 }
 
@@ -59,12 +62,6 @@ fi
 
 if [[ ! -x "$(type -p tput)" ]]; then
     echo 'The command "tput" is missing' 
-    exit 1
-fi
-
-SLIDEFILE="$(type -p slide.sh)"
-if [[ ! -x "$SLIDEFILE" ]]; then
-    echo 'The command "slide.sh" is missing' 
     exit 1
 fi
 
@@ -83,7 +80,7 @@ done
 
 SLIDE_IX=1
 echo -n "${SLIDE[$SLIDE_IX]}" | slide "$@"
-while read -s -N 1; do
+while read -rs -N 1; do
     case "$REPLY" in
         [hk])
             GO=-1
