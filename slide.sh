@@ -21,14 +21,20 @@ slide() {
     local -r IFS='' # ?
     local -r COLORS=(red=31 green=32 yellow=33 blue=34 purple=35 cyan=36 end=)
     local -ri COLS=$($TPUT cols) ROWS=$($TPUT lines)
-    local -i CENTER=0 LINENUM=0 CTRPOS=0 HASCOLOR=1
+    local -i CENTER=0 LINENUM=0 CTRPOS=0 SOURCE=0 HASCOLOR=1
     local LINE='' BARE=''
     trap '$TPUT clear' 0
     $TPUT clear
     while read -r LINE; do
         [ "$LINE" == '!!color' ] && HASCOLOR=1 && continue
         [ "$LINE" == '!!nocolor' ] && HASCOLOR=0 && continue
+        [ "$LINE" == '!!source' ] && SOURCE=1 && continue
         BARE=$LINE
+        if [ $SOURCE -eq 1 ]; then
+            eval "$BARE"
+            SOURCE=0
+            continue
+        fi
         if [ $HASCOLOR -eq 1 ]; then
             for C in "${COLORS[@]}"; do
                 BARE=${BARE//<${C%%=*}>/}
